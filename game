@@ -1,0 +1,192 @@
+public static void DeleteWithİd(int İd)
+        {
+            SqlConnection connection = new SqlConnection(Helper.con.ConnectionString);
+            SqlCommand command;
+            SqlDataReader reader;
+            int Hungerİd, Cleaningİd, Sleepingİd, LastAccessİd;
+            connection.Open();
+            command = new SqlCommand("Delete from CreaturesFoods where Creatureİd = '"+ CreatureProperties.Creatureİd +"'",connection);
+            command.ExecuteNonQuery();
+            command.CommandText = "select HungerStatu,CleaningStatu,SleepingStatu,LastAccess from CreatureProperties where İd = '" + CreatureProperties.Creatureİd + "'";
+            reader = command.ExecuteReader();
+            reader.Read();
+            Hungerİd = Convert.ToInt16(reader[0]);
+            Cleaningİd = Convert.ToInt16(reader[1]);
+            Sleepingİd = Convert.ToInt16(reader[2]);
+            LastAccessİd = Convert.ToInt16(reader[3]);
+            reader.Close();
+            command.CommandText = "Delete from CreatureProperties where İd = '" + CreatureProperties.Creatureİd + "'";
+            command.ExecuteNonQuery();
+            command.CommandText = "Delete from CreatureNames where Name = '" + CreatureProperties.CreatureName + "'";
+            command.ExecuteNonQuery();
+            command.CommandText = "Delete from HungerStatu where İd = '" + Hungerİd + "'";
+            command.ExecuteNonQuery();
+            command.CommandText = "Delete from CleaningStatu where İd = '" + Cleaningİd + "'";
+            command.ExecuteNonQuery();
+            command.CommandText = "Delete from SleepingStatu where İd = '" + Sleepingİd + "'";
+            command.ExecuteNonQuery();
+            command.CommandText = "Delete from AccessDates where İd = '" + LastAccessİd + "'";
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
+public static void SaveGame(int Creatureİd)
+        {
+            SqlConnection connection = new SqlConnection(Helper.con.ConnectionString);
+            SqlCommand command = new SqlCommand("update SleepingStatu set Statu = '"+ CreatureProperties.SleepingStatu +"' where İd = (select SleepingStatu from CreatureProperties where İd = '"+ Creatureİd +"')",connection);
+            connection.Open();
+            command.ExecuteNonQuery();
+            command.CommandText = "update CleaningStatu set Statu = '" + CreatureProperties.CleaningStatu + "' where İd = (select CleaningStatu from CreatureProperties where İd = '" + Creatureİd + "')";
+            command.ExecuteNonQuery();
+            command.CommandText = "update HungerStatu set Statu = '" + CreatureProperties.HungerStatu + "' where İd = (select HungerStatu from CreatureProperties where İd = '" + Creatureİd + "')";
+            command.ExecuteNonQuery();
+            command.CommandText = "update AccessDates set DateNdTime = '" + CreatureProperties.LastAccess + "' where İd = (select LastAccess from CreatureProperties where İd = '" + Creatureİd + "')";
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
+
+        public void JustDoİt(int İndex, int Creatureİd, string Foodİmage, int SaturationRate, int Food, int Money)
+        {
+            Foods foods = new Foods();
+            switch (İndex)
+            {
+                case 1:
+                    foods.Food1(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+                case 2:
+                    foods.Food2(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+                case 3:
+                    foods.Food3(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+                case 4:
+                    foods.Food4(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+                case 5:
+                    foods.Food5(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+                case 6:
+                    foods.Food6(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+                case 7:
+                    foods.Food7(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+                case 8:
+                    foods.Food8(Creatureİd, Foodİmage, SaturationRate, Food, Money);
+                    break;
+            }
+        }
+
+        public static SqlConnection con = new SqlConnection("Data Source=DESKTOP-U4PEP17\\SQLSERVER;Initial Catalog=SanalProje;Integrated Security=True");
+    }
+
+SqlConnection connection = new SqlConnection(Helper.con.ConnectionString);
+        SqlCommand command;
+        SqlDataReader reader;
+
+        private void FrmAccess_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                connection.Open();
+                command = new SqlCommand("select Name from CreatureNames",connection);
+                reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    cbmCharNames.Items.Add(reader["Name"]);
+                }
+                reader.Close();
+                command = new SqlCommand("select Food from Foods",connection);
+                reader = command.ExecuteReader();
+                reader.Read();
+                for (int i = 0; i < 16; i++)
+                {
+                    Foods.Foodİmages[i] = Application.StartupPath.ToString() + reader[0].ToString();
+                }
+                reader.Close();
+                connection.Close();
+            }
+            catch (Exception excep)
+            {
+                MessageBox.Show(excep.ToString(),"Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
+            }
+        }
+private void btnContinue_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (cbmCharNames.Text != "")
+                {
+                    CreatureProperties.CreatureName = cbmCharNames.Text;
+                    command = new SqlCommand();
+                    command.Connection = connection;
+                    connection.Open();
+                    command.CommandText = "select İd from CreatureProperties where CreatureName = (select İd from CreatureNames where Name = '" + cbmCharNames.Text + "')";
+                    var İd = command.ExecuteScalar();
+                    command.CommandText = "select İmageWay from Creatureİmages where İd = (select Charİmage from CreatureProperties where İd = '" + İd + "')";
+                    CreatureProperties.İmageWay = Application.StartupPath.ToString() + command.ExecuteScalar().ToString();
+                    command.CommandText = "select CurretExperience from CreatureProperties where İd = '"+ İd +"'";
+                    CreatureProperties.CurretXp = Convert.ToInt16(command.ExecuteScalar());
+                    command.CommandText = "select CurretLevel from CreatureProperties where id = '" + İd + "'";
+                    CreatureProperties.CurretLevel = Convert.ToInt16(command.ExecuteScalar());
+                    CreatureProperties.MaxXp = Helper.FindMaxXP(CreatureProperties.CurretLevel);
+                    command.CommandText = "select Money from CreatureProperties where id = '" + İd + "'";
+                    CreatureProperties.Money = Convert.ToInt16(command.ExecuteScalar());
+                    command.CommandText = "select Statu from HungerStatu where İd = (select HungerStatu from CreatureProperties where İd = '" + İd + "')";
+                    CreatureProperties.HungerStatu = Convert.ToInt16(command.ExecuteScalar());
+                    command.CommandText = "select Statu from CleaningStatu where İd = (select CleaningStatu from CreatureProperties where İd = '" + İd + "')";
+                    CreatureProperties.CleaningStatu = Convert.ToInt16(command.ExecuteScalar());
+                    command.CommandText = "select Statu from SleepingStatu where İd = (select SleepingStatu from CreatureProperties where İd = '" + İd + "')";
+                    CreatureProperties.SleepingStatu = Convert.ToInt16(command.ExecuteScalar());
+                    command.CommandText = "select DateNdTime from AccessDates where İd = (select LastAccess from CreatureProperties where İd = '" + İd + "')";
+                    CreatureProperties.LastAccess = Convert.ToDateTime(command.ExecuteScalar());
+                    CreatureProperties.Creatureİd = Convert.ToInt16(İd);
+                    connection.Close();
+                    //int Total, Years, Mounths, Days, Hours, Minutes;
+                    //string DatetimeHelper = CreatureProperties.LastAccess.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+                    //TimeSpan Span = DateTime.Now.Subtract(Convert.ToDateTime(DatetimeHelper));
+                    //MessageBox.Show(Span.ToString());
+                    //DateTime Datetime = DateTime.MinValue + Span;
+                    //Years = Datetime.Year - 1;
+                    //Mounths = (Datetime.Month - 1) + (Years < 0 ? 0 : Years * 12);
+                    //Days = (Datetime.Day - 1) + (Mounths < 0 ? 0 : Mounths * 30);
+                    //Hours = (Datetime.Hour - 1) + (Days < 0 ? 0 : Days * 24);
+                    //Minutes = (Datetime.Minute - 1) + (Hours < 0 ? 0 : Hours * 60);
+                    //Total = Minutes / 30;
+                    //CreatureProperties.HungerStatu = CreatureProperties.HungerStatu - Total;
+                    //CreatureProperties.SleepingStatu = CreatureProperties.SleepingStatu - Total;
+                    //CreatureProperties.CleaningStatu = CreatureProperties.CleaningStatu - Total;
+                    FrmLounge frm = new FrmLounge();
+                    this.Hide();
+                    frm.Show();
+                }
+                else
+                {
+                    MessageBox.Show("Yaratık seçmediniz!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception excep)
+            {
+                MessageBox.Show(excep.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+private void cbmCharNames_SelectedValueChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                connection.Open();
+                command = new SqlCommand("select İd from CreatureProperties where CreatureName = (select İd from CreatureNames where Name = '"+ cbmCharNames.Text +"')",connection);
+                var İd = command.ExecuteScalar();
+                command = new SqlCommand("select İmageWay from Creatureİmages where İd = (select Charİmage from CreatureProperties where İd = '"+ İd +"')",connection);
+                pictureBox1.ImageLocation = Application.StartupPath.ToString() + command.ExecuteScalar().ToString();
+                command = new SqlCommand("select CurretLevel from CreatureProperties where İd = '" + İd + "'", connection);
+                lvlBarXP.Text = command.ExecuteScalar().ToString();
+                lvlBarXP.Maximum = Helper.FindMaxXP(Convert.ToInt32(command.ExecuteScalar()));
+                command = new SqlCommand("select CurretExperience from CreatureProperties where İd = '" + İd + "'", connection);
+                lvlBarXP.Value = Convert.ToInt16(command.ExecuteScalar());
+                connection.Close();
+            }
+            catch (Exception excep)
+            {
+                MessageBox.Show(excep.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
