@@ -1,0 +1,181 @@
+SqlConnection connection;
+        SqlCommand command;
+        SqldataAdaptertaAdataAdapterpter dataAdapter;
+
+        void griddoldur()
+        {
+            connection = new SqlConnection("server=PC-BILGISAYAR; Initial Catalog=StokTakibi;Integrated Security=SSPI");
+            connection.Open();
+            dataAdapter = new SqldataAdaptertaAdataAdapterpter("SELECT BarkodNo as 'Barkod No',UrunAdi as 'Ürün Adı',UrunAdedi as 'Ürün Adedi',UrunFiyati as 'Adet Fiyatı',UrunAdedi*UrunFiyati as 'Total Fiyat' FROM Urunler ORDER BY UrunAdi ASC", connection);
+            dataAdaptertaTable table = new dataAdaptertaTable();
+            dataAdapter.Fill(table);
+            dataAdaptertaGridView1.dataAdaptertaSource = table;
+            connection.Close();
+        }
+private void BtnAdd_Click(object sender, EventArgs e)
+        {
+            if (radioButton1.Checked == true)//Search
+            {
+                if (tbBarcode.Text == "") { tbBarcode.Text = "*"; }
+                if (tbPiece.Text == "") { tbPiece.Text = "*"; }
+                if (tbPrice.Text == "") { tbPrice.Text = "*"; }
+                if (tbName.Text == "") { tbName.Text = "*"; }
+                
+                connection.Open();
+                dataAdaptertaTable tbl = new dataAdaptertaTable();
+                SqldataAdaptertaAdataAdapterpter ara = new SqldataAdaptertaAdataAdapterpter("SELECT BarkodNo as 'Barkod No',UrunAdi as 'Ürün Adı',UrunAdedi as 'Ürün Adedi',UrunFiyati as 'Adet Fiyatı',UrunAdedi*UrunFiyati as 'Total Fiyat' FROM Urunler WHERE BarkodNo like '%" + tbBarcode.Text+"%' or UrunAdi like '%"+tbName.Text+"%' or UrunAdedi like '%"+tbPiece.Text+"%' or UrunFiyati like '%"+tbPrice.Text.Replace(',', '.') + "%' ORDER BY UrunAdi ASC", connection);
+                ara.Fill(tbl);
+                connection.Close();
+                dataAdaptertaGridView1.dataAdaptertaSource = tbl;
+
+                if (tbBarcode.Text == "*" && tbName.Text == "*" && tbPiece.Text == "*" && tbPrice.Text == "*"){ griddoldur(); }
+                if (tbBarcode.Text == "*") { tbBarcode.Text = ""; }
+                if (tbPiece.Text == "*") { tbPiece.Text = ""; }
+                if (tbPrice.Text == "*") { tbPrice.Text = ""; }
+                if (tbName.Text == "*") { tbName.Text = ""; }
+            }
+            else if (radioButton2.Checked == true)//Add
+            {
+                if (tbBarcode.Text == "" || tbPiece.Text == "" || tbPrice.Text == "" || tbName.Text == "")
+                {
+                    MessageBox.Show("Kayıt eklenemedi lütfen bilgileri eksiksiz giriniz", "Hata!", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    SqlCommand ara = new SqlCommand("select count(*) from Urunler where BarkodNo= " + tbBarcode.Text , connection);
+                    connection.Open();
+                    int sonuc = (int)ara.ExecuteScalar();
+                    connection.Close();
+                    if (sonuc == 1)
+                    {
+                        MessageBox.Show("Aynı kayıt zaten var lütfen barkod numbersını kontrol ediniz!","Hata!",MessageBoxButtons.OKCancel,MessageBoxIcon.Error);
+                        
+
+                        connection.Open();
+                        dataAdaptertaTable tbl1 = new dataAdaptertaTable();
+                        SqldataAdaptertaAdataAdapterpter ara1 = new SqldataAdaptertaAdataAdapterpter("SELECT BarkodNo as 'Barkod No',UrunAdi as 'Ürün Adı',UrunAdedi as 'Ürün Adedi',UrunFiyati as 'Adet Fiyatı',UrunAdedi*UrunFiyati as 'Total Fiyat' FROM Urunler WHERE BarkodNo= " + tbBarcode.Text + " ORDER BY UrunAdi ASC", connection);
+                        ara1.Fill(tbl1);
+                        connection.Close();
+                        dataAdaptertaGridView1.dataAdaptertaSource = tbl1;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Yeni ürün kaydı veritabanına eklendi","Başarılı!",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                        string sorgu = "Insert into Urunler ([BarkodNo],[UrunAdi],[UrunAdedi],[UrunFiyati]) values (@barkod,@ad,@adet,@fiyat)";
+                        command = new SqlCommand(sorgu, connection);
+                        command.Parameters.AddWithValue("@barkod", tbBarcode.Text);
+                        command.Parameters.AddWithValue("@ad", tbName.Text);
+                        command.Parameters.AddWithValue("@adet", tbPiece.Text);
+                        command.Parameters.AddWithValue("@fiyat", tbPrice.Text.Replace(',', '.'));
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                        connection.Close();
+                        griddoldur();
+                    }
+                }
+            }
+            else if (radioButton3.Checked == true) //Delete
+            {
+                SqlCommand ara = new SqlCommand("select count(*) from Urunler where BarkodNo= " + tbBarcode.Text, connection);
+                connection.Open();
+                int sonuc = (int)ara.ExecuteScalar();
+                connection.Close();
+                if (sonuc == 0)
+                {
+                    MessageBox.Show("Kayıt bulunamadı lütfen barkod numbersını kontrol ediniz!", "Hata!", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                    griddoldur();
+                }
+                else
+                {
+                    DialogResult options = MessageBox.Show("Bu ürünü kalıcı olarak Deletemek istediğinize emin misiniz?", "Uyarı!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                    if (options == DialogResult.Yes)
+                    {
+                        string sorgu = "Delete From Urunler Where BarkodNo=@barkod";
+                        command = new SqlCommand(sorgu, connection);
+                        command.Parameters.AddWithValue("@barkod", Convert.ToInt32(tbBarcode.Text));
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                        connection.Close();
+                        griddoldur();
+                    }
+                    else if (options == DialogResult.No)
+                    {
+                        
+                    }
+                }
+
+            }
+            else if (radioButton4.Checked == true)//Update
+            {
+                if (tbBarcode.Text == "" || tbPiece.Text == "" || tbPrice.Text == "" || tbName.Text == "")
+                {
+                    MessageBox.Show("Kayıt güncellenemedi lütfen bilgileri eksiksiz giriniz", "Hata!", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    DialogResult options = MessageBox.Show("Bu ürünü güncellemek üzeresiniz devam etmek istiyor musunuz?", "Bilgi", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+                    if (options == DialogResult.Yes)
+                    {
+                        string sorgu = "Delete From Urunler Where BarkodNo=@barkod";
+                        command = new SqlCommand(sorgu, connection);
+                        command.Parameters.AddWithValue("@barkod", Convert.ToInt32(tbBarcode.Text));
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                        connection.Close();
+
+                        string sorgu1 = "Insert into Urunler ([BarkodNo],[UrunAdi],[UrunAdedi],[UrunFiyati]) values (@barkod,@ad,@adet,@fiyat)";
+                        command = new SqlCommand(sorgu1, connection);
+                        command.Parameters.AddWithValue("@barkod", tbBarcode.Text);
+                        command.Parameters.AddWithValue("@ad", tbName.Text);
+                        command.Parameters.AddWithValue("@adet", tbPiece.Text);
+                        command.Parameters.AddWithValue("@fiyat", tbPrice.Text);
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                        connection.Close();
+                        griddoldur();
+                    }
+                    else if (options == DialogResult.No)
+                    {
+                        
+                    }
+                }
+            }
+        }
+void Delete(int number)
+        {
+            string sorgu = "Delete From Urunler Where BarkodNo=@barkod";
+            command = new SqlCommand(sorgu, connection);
+            command.Parameters.AddWithValue("@barkod", number);
+            connection.Open();
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
+private void dataAdaptertaGridView1_MouseDown_1(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                int satir = dataAdaptertaGridView1.HitTest(e.X, e.Y).RowIndex;
+                if (satir > -1) 
+                {
+                    dataAdaptertaGridView1.Rows[satir].Selected = true;
+                    number = Convert.ToInt32(dataAdaptertaGridView1.Rows[satir].Cells["Barkod No"].Value);
+                }
+            }
+        }
+private void tbBarcode_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            e.Handled = !char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar);
+        }
+
+        private void tbPiece_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            e.Handled = !char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar);
+        }
+
+        private void tbPrice_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+            e.Handled = !char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar) && e.KeyChar != '.' && e.KeyChar != ',';
+        }
