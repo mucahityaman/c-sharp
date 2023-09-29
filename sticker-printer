@@ -1,0 +1,155 @@
+private void btnAdd_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.RowCount < 40)
+            {
+                tbBarkod.Focus();
+                errorProvider1.Clear();
+
+                if (tbBarkod.Text == "") { errorProvider1.SetError(tbBarkod, "Eksiksiz Doldurunuz!"); }
+                if (tbAd.Text == "") { errorProvider1.SetError(tbAd, "Eksiksiz Doldurunuz!"); }
+                if (tbFiyat.Text == "") { errorProvider1.SetError(tbFiyat, "Eksiksiz Doldurunuz!"); }
+
+                if (tbBarkod.Text != "" && tbAd.Text != "" && tbFiyat.Text != "")
+                {
+                    barkod = ulong.Parse(tbBarkod.Text);
+                    ad = tbAd.Text;
+                    fiyat = Convert.ToDouble(tbFiyat.Text);
+                    dataGridView1.Rows.Add(barkod, ad, fiyat);
+                    tbBarkod.Text = "";
+                    tbAd.Text = "";
+                    tbFiyat.Text = "";
+                }
+            }
+            else
+            {
+                MessageBox.Show("Sayfa Doldu!");
+            }
+        }
+
+        private void btnCikis_Click(object sender, EventArgs e)
+        {
+            state = false;
+            timer1.Start();
+        }
+
+        private void btnSayfaAyar_Click(object sender, EventArgs e)
+        {
+            pageSetupDialog1.ShowDialog();
+        }
+
+        private void btnBaskiÖnizle_Click(object sender, EventArgs e)
+        {
+            printPreviewDialog1.ShowDialog();
+        }
+
+        private void btnYazdir_Click(object sender, EventArgs e)
+        {
+            DialogResult pdr = printDialog1.ShowDialog();
+            if (pdr == DialogResult.OK)
+            {
+                printDocument1.Print();
+            }
+        }
+
+        private void printDocument1_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
+        {
+            Font myFont = new Font("Calibri", 20);
+            SolidBrush sbrush = new SolidBrush(Color.Black);
+            Pen myPen = new Pen(Color.Black);
+
+            int x = 40, y = 30, k = 0, etiketSayisi = dataGridView1.RowCount;
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (k >= etiketSayisi)
+                    {
+                        break;
+                    }
+                    e.Graphics.DrawString(dataGridView1.Rows[k].Cells[1].Value.ToString(), myFont, sbrush, x, y);
+                    e.Graphics.DrawString("     " + dataGridView1.Rows[k].Cells[2].Value.ToString() + "₺", myFont, sbrush, x, y+30);
+                    x += 207;
+                    k++;
+                        
+                }y = y + 117; x = 40;
+                if (k >= etiketSayisi)
+                {
+                    break;
+                }
+            }
+
+            for (int m = 1; m < 10; m++)
+            {
+                e.Graphics.DrawLine(myPen, 0, m*117, 830, m*117);
+                e.Graphics.DrawLine(myPen, m*207, 0, m*207, 1169);
+            }
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            int selectedIndex = dataGridView1.CurrentCell.RowIndex;
+            if (selectedIndex > -1)
+            {
+                tbBarkod.Text = dataGridView1.Rows[selectedIndex].Cells[0].Value.ToString();
+                tbAd.Text = dataGridView1.Rows[selectedIndex].Cells[1].Value.ToString();
+                tbFiyat.Text = dataGridView1.Rows[selectedIndex].Cells[2].Value.ToString();
+            }
+            
+        }
+
+        private void tbBarkod_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbFiyat_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && (e.KeyChar != ','))
+            {
+                e.Handled = true;
+            }
+
+            if ((e.KeyChar == ',') && ((sender as TextBox).Text.IndexOf(',') > -1))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.RowCount > 0)
+            {
+                dataGridView1.Rows.RemoveAt(dataGridView1.CurrentCell.RowIndex);
+                dataGridView1.Refresh();
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            FontDialog Font = new FontDialog();
+            Font.ShowColor = true;
+            Font.MaxSize = 20;
+            Font.MinSize = 12;
+            Font.ShowDialog();
+            dataGridView1.Font = Font.Font;
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (state)
+            {
+                this.Opacity += .1;
+                if (this.Opacity == 100)
+                    timer1.Stop();
+            }
+            else
+            {
+                this.Opacity -= .1;
+                if (this.Opacity == 0)
+                    this.Close();
+            }
+        }
+    }
