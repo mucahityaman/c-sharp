@@ -1,0 +1,253 @@
+ OleDbConnection baglanti = new OleDbConnection("Provider = Microsoft.ACE.OLEDB.12.0; Data Source = vtBarcodec.accdb;");
+        OleDbDataAdapter adaptor = new OleDbDataAdapter();
+        OleDbCommand komut = new OleDbCommand();
+        DataSet ds = new DataSet();
+        OleDbDataReader dr;
+        int adet = 1;
+        string sql = "";
+        //private FilterInfoCollection webcam;
+        //private VideoCaptureDevice cam;
+        SoundPlayer simpleSound = new SoundPlayer("sound.wav");
+
+private void Form2_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.dataGridView1.DefaultCellStyle.Font = new Font("Square721 BT", 20);
+                lblSube.Text += Form1.sube;
+
+                //webcam = new FilterInfoCollection(FilterCategory.VideoInputDevice); //webcam dizisine mevcut kameraları dolduruyoruz.
+                //foreach (FilterInfo item in webcam)
+                //{
+                //    cbKamera.Items.Add(item.Name); //kameraları combobox a dolduruyoruz.
+                //}
+                //cbKamera.SelectedIndex = 0;
+                //cam = new VideoCaptureDevice(webcam[cbKamera.SelectedIndex].MonikerString); //başlaya basıldığıdnda yukarda tanımladığımız cam değişkenine comboboxta seçilmş olan kamerayı atıyoruz.
+                //cam.NewFrame += new NewFrameEventHandler(cam_NewFrame);
+                //cam.Start();
+                listele();
+
+                baglanti.Open();
+                komut.Connection = baglanti;
+                komut.CommandText = "SELECT * FROM tblKullanicilar";
+                dr = komut.ExecuteReader();
+                while (dr.Read())
+                    cbKasiyer.Items.Add(dr["kullaniciAdi"]);
+                baglanti.Close();
+
+                komut.Connection = baglanti;
+                komut.CommandText = "Select * From tblSubeler ";
+                baglanti.Open();
+                dr = komut.ExecuteReader();
+                while (dr.Read())
+                    cbSube.Items.Add(dr["subeAdi"]);
+                baglanti.Close();
+            }
+            catch (Exception f)
+            {
+                MessageBox.Show(f.ToString());
+                throw;
+            }
+        }
+
+void aramaSonuc()
+        {
+            try {
+                int say = 0;
+                if (tbAra.Text != "")
+                {
+                    listBox1.Items.Clear();
+                    baglanti.Open();
+                    komut.Connection = baglanti;
+                    komut.CommandText = "SELECT * FROM tblUrunler WHERE urunAdi LIKE '%" + tbAra.Text + "%' OR barkodNo LIKE '%" + tbAra.Text + "%'";
+                    OleDbDataReader reader = komut.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        listBox1.Items.Add(reader["urunAdi"]);
+                        if (say < 10)
+                            say++;
+                    }
+                    baglanti.Close();
+                    if (say > 0)
+                    {
+                        listBox1.Visible = true;
+                        listBox1.SetSelected(0, true);
+                    }
+                    else
+                        listBox1.Visible = false;
+                    listBox1.Size = new Size(tbAra.Size.Width, 37 + ((say - 1) * 33));
+                }
+                else
+                {
+                    listBox1.Visible = false;
+                    listBox1.Items.Clear();
+                }
+            }
+            catch (Exception f)
+            {
+                MessageBox.Show(f.ToString());
+                throw;
+            }
+    
+        }
+
+void urunEkle(string urunAdi) {
+            try {
+                adet = int.Parse(tbAdet.Text);
+                dataGridView2.ColumnCount = 3;
+                dataGridView2.Columns[0].HeaderText = "Ürün Adı";
+                dataGridView2.Columns[1].HeaderText = "Adet";
+                dataGridView2.Columns[2].HeaderText = "Fiyat";
+                simpleSound.Play();
+
+                bool varmi = false;
+                if (dataGridView2.RowCount != 0)
+                {
+                    for (int i = 0; i < dataGridView2.Rows.Count; i++)
+                    {
+                        if (dataGridView2.Rows[i].Cells[0].Value.ToString() == urunAdi)
+                        {
+                            int miktar = 0; double bfiyat = 0;
+                            
+                            varmi = true;
+
+                            baglanti.Open(); // bu kod ile bağlantıyı açıyoruz.
+                            komut.Connection = baglanti; // command.Connection ile bağlan değişkenini bağlayalım.
+                            komut.CommandText = "select* from tblUrunler where urunAdi ='" + urunAdi + "'"; // bu değişken ile sql kodu ile tablo seçme işlemini yapıyoruz.
+                            OleDbDataReader reader = komut.ExecuteReader();
+                            while (reader.Read())
+                            { //while’i tüm öğeleri seçmek için kullandık.
+                                //if (adet <= Convert.ToInt32(reader["adet"]))
+                                {
+                                    sql = "update tblUrunler set adet = '" + Convert.ToString((Convert.ToInt32(reader["adet"]) - adet)) + "' where urunAdi = '" + reader["urunAdi"] + "'";
+                                    miktar = Convert.ToInt32(dataGridView2.Rows[i].Cells[1].Value);
+                                    bfiyat = Convert.ToDouble(dataGridView2.Rows[i].Cells[2].Value) / miktar;
+                                    dataGridView2.Rows[i].Cells[2].Value = String.Format("{0:0.00}", (bfiyat * (++miktar)));
+                                    dataGridView2.Rows[i].Cells[1].Value = miktar;
+                                }
+                                //else
+                                {
+                                    //MessageBox.Show("Ürün adedi stoklarda yetersiz!\nBu ürünün stok adedi: "+ Convert.ToInt32(reader["adet"]), "Yetersiz Stok", MessageBoxButtons.OKCancel,MessageBoxIcon.Warning);
+                                }
+                            }
+                            baglanti.Close();
+                            //stoktanDus(sql);
+                            break;
+                        }
+                    }
+                }
+                else
+                    varmi = false;
+                if (!varmi)
+                {
+                    baglanti.Open(); // bu kod ile bağlantıyı açıyoruz.
+                    komut.Connection = baglanti; // command.Connection ile bağlan değişkenini bağlayalım.
+                    komut.CommandText = "select* from tblUrunler where urunAdi ='" + urunAdi + "'"; // bu değişken ile sql kodu ile tablo seçme işlemini yapıyoruz.
+                    OleDbDataReader reader = komut.ExecuteReader(); //bu kod ile tablonun içeriğini okutuyoruz.
+                    
+                    while (reader.Read())
+                    { //while’i tüm öğeleri seçmek için kullandık.
+                      //if (adet <= Convert.ToInt32(reader["adet"]))
+                        {
+                            dataGridView2.Rows.Add(reader["urunAdi"], adet, String.Format("{0:0.00}", Convert.ToDouble(reader["fiyat"]) * adet));
+                            sql = "update tblUrunler set adet = '" + Convert.ToString((Convert.ToInt32(reader["adet"]) - adet)) + "' where urunAdi = '" + reader["urunAdi"] + "'";
+                        }
+                        //else 
+                        {
+                            //MessageBox.Show("Ürün adedi stoklarda yetersiz!\nBu ürünün stok adedi: " + Convert.ToInt32(reader["adet"]), "Yetersiz Stok", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+                        }
+                    }
+                    baglanti.Close();
+                    //if (sql!="")
+                        //stoktanDus(sql);
+                }
+                
+                DataGridViewImageColumn btnIptal = new DataGridViewImageColumn();
+                btnIptal.Image = Image.FromFile("C:\\Users\\mucah\\source\\repos\\Barcodec\\Barcodec\\bin\\Debug\\x-icon.png");
+                btnIptal.HeaderText = "İptal";
+                dataGridView2.Columns.Add(btnIptal);
+
+                dataGridView2.Columns[2].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dataGridView2.Columns[1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+                this.dataGridView2.DefaultCellStyle.Font = new Font("Square721 BT", 20);
+                dataGridView2.Columns[0].Width = 252;
+                dataGridView2.Columns[1].Width = 150;
+                dataGridView2.Columns[2].Width = 175;
+                dataGridView2.Columns[3].Width = 120;
+                this.dataGridView2.DefaultCellStyle.Padding = new Padding(3, 3, 3, 3);
+
+                hesapla();
+            }
+            catch (Exception f)
+            {
+                MessageBox.Show(f.ToString());
+                throw;
+            }
+        }
+        void stoktanDus(string sorgu)
+        { 
+            baglanti.Open();
+            komut.Connection = baglanti;
+            komut.CommandText = sorgu;
+            komut.ExecuteReader();
+            baglanti.Close();
+
+        }
+
+void hesapla() {
+            try {
+                double toplam = 0;
+                for (int i = 0; i < dataGridView2.Rows.Count; ++i)
+                    toplam += Convert.ToDouble(dataGridView2.Rows[i].Cells[2].Value);
+                gToplam = (toplam - (toplam / 100) * indirim);
+                gToplam = Convert.ToDouble(String.Format("{0:0.##}", gToplam));
+                double a = (gToplam * 100) % 10;
+                a = Convert.ToDouble(String.Format("{0:0.##}", a));
+                if (a < 5)
+                    gToplam -= a / 100;
+                else
+                {
+                    a -= 5;
+                    gToplam -= a / 100;
+                }
+                lblYuvarlama.Text = String.Format("{0:0.00}", (a / 100)) + " TL";
+                lblToplam.Text = String.Format("{0:0.00}", gToplam) + " TL";
+                lblindirim.Text = String.Format("{0:0.00}", (toplam - gToplam)) + " TL";
+                paraUstu();
+            }
+            catch (Exception f)
+            {
+                MessageBox.Show(f.ToString());
+                throw;
+            }
+            
+        }
+
+void paraUstu() {
+            try {
+                if (alinanTutar < gToplam && alinanTutar != 0)
+                {
+                    MessageBox.Show("Alınan tutar toplam fiyattan küçük olamaz.", "Uyarı!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    lblParaustu.Text = String.Format("{0:0.00}", alinanTutar - gToplam) + " TL";
+                    if (alinanTutar - gToplam < 0)
+                        lblParaustu.ForeColor = Color.Red;
+                    else
+                        lblParaustu.ForeColor = Color.Black;
+                }
+                else
+                {
+                    lblParaustu.Text = String.Format("{0:0.00}", alinanTutar - gToplam) + " TL";
+                    if (alinanTutar - gToplam < 0)
+                        lblParaustu.ForeColor = Color.Red;
+                    else
+                        lblParaustu.ForeColor = Color.Black;
+                }
+            }
+            catch (Exception f)
+            {
+                MessageBox.Show(f.ToString());
+                throw;
+            }
+            
+        }
